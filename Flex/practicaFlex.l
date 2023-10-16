@@ -1,6 +1,6 @@
 /**
 * Práctica de FLEX
-* Autores: Jimena Arnaiz González e Iván Estépar Rebollo
+* Autores-> Jimena Arnaiz González e Iván Estépar Rebollo
 **/
 
 %{  
