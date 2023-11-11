@@ -1,1 +1,251 @@
-código futuro 
+/**
+* Autores:
+*
+* -Jimena Arnaiz González
+* -Iván Estépar Rebollo
+**/
+
+//Configuración de opciones para el analizador
+options {
+	BUILD_TOKEN_MANAGER=true;
+	COMMON_TOKEN_ACTION=false;
+	DEBUG_TOKEN_MANAGER =false;
+}
+
+PARSER_BEGIN(testP2) //Comienza el parser
+//Librerías para realizar lectura de fichero
+import java.io.*;
+import java.util.Scanner;
+
+public class testP2 {
+    static private int nextNumber = 0;
+    // Función para obtener el siguiente número único
+    private static int getNextNumber() {
+	return nextNumber++;
+    }	 
+    //main
+    public static void main(String args[]) {
+	BufferedReader reader = null;
+ 	// Manejo de entrada desde un archivo 
+        if (args.length == 1) { //comprueba si se le ha pasado un fichero
+            try {
+                FileInputStream fileInputStream = new FileInputStream(args[0]);
+                // Crea un BufferedReader para leer eficientemente caracteres desde el flujo de entrada
+                reader = new BufferedReader(new InputStreamReader(fileInputStream));
+            } catch (IOException ex) {
+                System.err.println("Error al abrir el archivo: " + ex.getMessage());
+                return;
+            }
+        } else { //Manejo de entrada por teclado
+            reader = new BufferedReader(new InputStreamReader(System.in));
+       }
+
+        try { // Intenta crear un objeto parser utilizando la entrada proporcionada por el usuario
+	    testP2 parser = new testP2(reader);
+	    parser.stmts(); //llama al axioma
+        } catch (ParseException ex) {
+            System.err.println("Error de análisis: " + ex.getMessage());
+        } finally {
+            try {
+                reader.close();
+            } catch (IOException ex) {
+                System.err.println("Error al cerrar el archivo: " + ex.getMessage());
+            }
+        }
+    }
+}
+
+PARSER_END(testP2)
+
+SKIP :
+{
+ 	  " " {System.out.print("");System.out.flush();} //espacios en blanco
+	| "\r" {System.out.print("");System.out.flush();} 
+	| "\t" {System.out.print("");System.out.flush();} //tabulaciones
+	| "\n" {System.out.print("");System.out.flush();} //saltos de línea
+	| < COMM: "#" (~["\n", "\r"])* > // Comentarios en línea con #
+}
+
+// Definición de tokens a ignorar 
+TOKEN:
+{
+	 < DO: "do" > 
+	|
+	 < WHILE: "while" >  
+	|
+	 < ABRIR: "(" > 
+	|
+	 < CERRAR: ")" >
+	|
+	 < FOR: "for" >
+	|
+	 < FROM: "from" >
+	|
+	 < TO: "to" >
+	|
+	 < IF: "if" >
+	|
+	 < ELSE: "else" >
+	|
+	 < BY: "by" >
+	|
+	 < READ: "read" >
+	|
+	 < PRINT: "print" >
+	|
+	 < pCOMA: ";" >
+	|
+	 < aKEY: "{">
+	|
+	 < cKEY: "}" >
+	|
+	 < ASS: "<:" >
+	|
+	 < ADD: "+=" >
+	|
+	 < SUB: "-=" >
+	|
+	 < MUL: "*=" >
+	|
+	 < DIV: "/=" >
+}
+
+// Definición de tokens (NUM e ID)
+TOKEN :
+{
+	 < NUM: (["0"-"9"])+ >
+	| 
+	 < ID: (["a"-"z", "A"-"Z", "_"])(["a"-"z", "A"-"Z", "_", "0"-"9"])* >
+}
+
+// Regla para declaraciones(statements)
+void stmts (): {}
+{
+	stmt() ( ";" stmts() )?
+}
+
+// Regla para una declaración(statement): bucle, condicional, asignación o entrada/salida
+void stmt(): {}
+{
+	loop() | cond() | assig() | io() 
+} 
+
+//Regla para bucles (do-while y for)
+void loop():
+{
+	Token idToken, tk;
+	int etiqDO = getNextNumber(); //el num de las etiquetas se consigue llamando a la función de obtener siguiente número 
+	int etiqWFIN = getNextNumber();
+
+	int etiqFORCUERPO =  getNextNumber();
+	int etiqFFIN =  getNextNumber();
+	int numTo, cont = 1;
+}
+
+{
+	 "do" {System.out.println("LBL" + etiqDO + ":");}
+  		stmts()
+  	 "while" "(" expr() ")" {System.out.println("\tsifalsovea LBL" + etiqWFIN + "\n\tvea LBL" + etiqDO + "\nLBL" + etiqWFIN + ":");}
+	|
+	 "for" "(" 
+		 tk = <ID> {System.out.println("\tvalori " + tk.image);}
+	 	 "from" expr() {System.out.println("\tasigna ");}
+	 	 "to" idToken = <NUM> {numTo = Integer.parseInt(idToken.image);}
+	 	 ( "by" idToken =  <NUM> {cont = Integer.parseInt(idToken.image);} )? 
+     	        ")" {System.out.println("LBL" + etiqFORCUERPO + ":");}
+ 		"{" stmts() "}" { System.out.println("\tvalori " + tk);
+     				  System.out.println("\tvalord " + tk);
+     				  System.out.println("\tmete " + cont);
+     				  System.out.println("\tadd");
+     				  System.out.println("\tasigna");
+     				  System.out.println("\tmete " + numTo);
+     				  System.out.println("\tvalord " + tk);
+     				  System.out.println("\tsub ");
+     				  System.out.println("\tsifalsovea LBL" + etiqFFIN);
+     				  System.out.println("\tvea LBL" + etiqFORCUERPO);
+     				  System.out.println("LBL" + etiqFFIN + ":" );
+     				}	
+}
+
+//Regla para condicionales (if-else)
+void cond():
+{
+	int etiqELSE =  getNextNumber();
+	int etiqIEFIN = getNextNumber();
+}
+
+{
+	"if" "(" expr() ")" {System.out.println("\tsifalsovea LBL" + etiqELSE);}
+		"{" stmts() "}"
+	("else" {
+		 System.out.println("\tvea LBL" + etiqIEFIN);
+		 System.out.println("LBL" + etiqELSE + ":");
+		 etiqELSE = etiqIEFIN;
+		}
+		"{" stmts() "}" 
+	)? 
+  	{System.out.println("LBL" + etiqELSE + ":");}
+}
+
+//Regla para entrada/salida
+void io():
+{Token tk;}
+{
+	 "print" expr() {System.out.println("\tprint ");}
+	|
+	 "read" tk = <ID> {System.out.println("\tread " + tk.image);}
+}
+
+//Regla para asignaciones de distintos tipos
+void assig():
+{Token tk;}
+{
+	tk = <ID> {System.out.println("\tvalori " + tk.image);}
+	(  "<:" expr() {System.out.println("\tasigna");}
+	 | "+=" {System.out.println("\tvalord " + tk.image);} expr() {System.out.println("\tadd\n" + "\tasigna");}
+  	 | "-=" {System.out.println("\tvalord " + tk.image);} expr() {System.out.println("\tsub\n" +"\tasigna");}
+ 	 | "*=" {System.out.println("\tvalord " + tk.image);} expr() {System.out.println("\tmul\n" + "\tasigna");}
+  	 | "/=" {System.out.println("\tvalord " + tk.image);} expr() {System.out.println("\tdiv\n" + "\tasigna");} 
+  	)	
+}
+
+//Regla para expresiones
+void expr(): {}
+{
+    	mult() exprRest()
+}
+
+//Regla adicional para poder quitar la recursividad a izq (sumas y restas)
+void exprRest(): {}
+{
+	(  "+" mult() { System.out.println("\tadd"); } exprRest() 
+	 | "-" mult() { System.out.println("\tsub"); } exprRest() 
+	)? //el ? sirve para la producción epsilon
+}
+
+//Regla para multiplicaciones y divisiones
+void mult(): {}
+{
+	val() multPrima()
+}
+//Regla adicional para poder quitar la recursividad a izq (multiplicaciones y divisiones)
+void multPrima(): {}
+{
+	(  "*" val() { System.out.println("\tmul"); } multPrima()
+	 | "/" val() { System.out.println("\tdiv"); } multPrima()
+	)?
+}
+
+//Regla para valores
+void val():
+{Token tk; int res;}
+{
+	 tk = <NUM> { res = Integer.parseInt(tk.image); //pasamos el número leído a entero 
+		      System.out.println("\tmete "+ res);
+		    } //se carga el número en la pila
+	|
+	 tk = <ID> { System.out.println("\tvalord " + tk.image); } //se carga el valor (ID) en la pila
+	|
+	 "(" expr() ")" 
+}
+
